@@ -1,13 +1,20 @@
 package com.cjz.turingrobot.activity;
 
+import android.animation.Animator;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Outline;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewAnimationUtils;
+import android.view.ViewOutlineProvider;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -17,6 +24,7 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -37,10 +45,11 @@ import java.util.List;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
+import okhttp3.internal.Util;
 
 import static org.litepal.LitePalApplication.getContext;
 
-public class RobotActivity extends AppCompatActivity {
+public class RobotActivity extends BaseActivity {
     private ListView listView;
     private ChatAdapter adapter;
     private List<ChatBean> chatBeanList; //存放所有聊天数据的集合
@@ -80,35 +89,44 @@ public class RobotActivity extends AppCompatActivity {
 
     public void initView() {
         listView = (ListView) findViewById(R.id.list);
+        listView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
         et_send_msg = (EditText) findViewById(R.id.et_send_msg);
         btn_send = (Button) findViewById(R.id.btn_send);
         mRlBottom = findViewById(R.id.rl_bottom);
         mAllSelect = findViewById(R.id.all_select);
         mAllSelect.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onClick(View v) {
                 btnSelectAllList();
+                startCircular(mAllSelect);
             }
         });
         mAllNotSelect = findViewById(R.id.all_not_select);
         mAllNotSelect.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onClick(View v) {
                 btnNoList();
+                startCircular(mAllNotSelect);
             }
         });
         mBackSelect = findViewById(R.id.back_select);
         mBackSelect.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onClick(View v) {
                 btnfanxuanList();
+                startCircular(mBackSelect);
             }
         });
         mDelete = findViewById(R.id.delete);
         mDelete.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onClick(View v) {
                 btnOperateList();
+                startCircular(mDelete);
             }
         });
         mToolsBar = findViewById(R.id.tools_bar);
@@ -159,7 +177,7 @@ public class RobotActivity extends AppCompatActivity {
                         location[1], popupMenuItemList, new PopupList.PopupListListener() {
                             @Override
                             public boolean showPopupList(View adapterView, View contextView, int contextPosition) {
-                                if (!adapter.flag){ //不是编辑状态，弹出菜单
+                                if (!adapter.flag) { //不是编辑状态，弹出菜单
                                     return true;
                                 }
                                 return false;
@@ -174,17 +192,17 @@ public class RobotActivity extends AppCompatActivity {
                                         Toast.makeText(getContext(), "已复制到剪切板，快去粘贴吧~", Toast.LENGTH_SHORT).show();
                                         break;
                                     case 1:
+                                        listView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_DISABLED);
                                         ChatBean chatBean = chatBeanList.get(contextPosition);
                                         chatBeanList.remove(chatBean);
                                         adapter.notifyDataSetChanged();    //更新ListView列表
                                         LitePal.delete(ChatBean.class, chatBean.getId());
                                         break;
                                     case 2:
-                                        chatBeanList.get(contextPosition).isCheck=true;
+                                        chatBeanList.get(contextPosition).isCheck = true;
                                         btnEditList();
                                         break;
                                 }
-//                                Toast.makeText(contextView.getContext(), contextPosition + "," + position, Toast.LENGTH_SHORT).show();
                             }
                         });
                 return true;
@@ -193,6 +211,7 @@ public class RobotActivity extends AppCompatActivity {
     }
 
     private void sendData() {
+        listView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
         sendMsg = et_send_msg.getText().toString(); //获取你输入的信息
         if (TextUtils.isEmpty(sendMsg)) {             //判断是否为空
             Toast.makeText(this, "您还未输任何信息哦", Toast.LENGTH_LONG).show();
@@ -243,6 +262,7 @@ public class RobotActivity extends AppCompatActivity {
     }
 
     private void showData(String message) {
+        listView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
         ChatBean chatBean = new ChatBean();
         chatBean.setMessage(message);
         chatBean.setState(ChatBean.RECEIVE);//RECEIVE表示接收到机器人发送的信息
@@ -280,9 +300,9 @@ public class RobotActivity extends AppCompatActivity {
             if (mToolsBar.getVisibility() == View.VISIBLE) {
                 btnEditList();
                 for (ChatBean chatBean : chatBeanList) {
-                    chatBean.isCheck=false;
+                    chatBean.isCheck = false;
                 }
-            }else if ((System.currentTimeMillis() - exitTime) > 2000) {
+            } else if ((System.currentTimeMillis() - exitTime) > 2000) {
                 Toast.makeText(RobotActivity.this, "再按一次退出智能聊天程序", Toast.LENGTH_SHORT).show();
                 exitTime = System.currentTimeMillis();
             } else {
@@ -298,6 +318,7 @@ public class RobotActivity extends AppCompatActivity {
      * 编辑、取消编辑
      */
     public void btnEditList() {
+        listView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_DISABLED);
         adapter.flag = !adapter.flag;
         if (adapter.flag) {
             mToolsBar.setVisibility(View.VISIBLE);
@@ -313,6 +334,7 @@ public class RobotActivity extends AppCompatActivity {
      * 全选
      */
     public void btnSelectAllList() {
+        listView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_DISABLED);
         if (adapter.flag) {
             for (int i = 0; i < chatBeanList.size(); i++) {
                 chatBeanList.get(i).isCheck = true;
@@ -325,7 +347,7 @@ public class RobotActivity extends AppCompatActivity {
      * 全不选
      */
     public void btnNoList() {
-
+        listView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_DISABLED);
         if (adapter.flag) {
             for (int i = 0; i < chatBeanList.size(); i++) {
                 chatBeanList.get(i).isCheck = false;
@@ -338,6 +360,7 @@ public class RobotActivity extends AppCompatActivity {
      * 反选
      */
     public void btnfanxuanList() {
+        listView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_DISABLED);
         if (adapter.flag) {
             for (int i = 0; i < chatBeanList.size(); i++) {
                 if (chatBeanList.get(i).isCheck) {
@@ -354,7 +377,7 @@ public class RobotActivity extends AppCompatActivity {
      * 获取选中数据
      */
     public void btnOperateList() {
-
+        listView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_DISABLED);
         final List<ChatBean> ids = new ArrayList<>();
 
         if (adapter.flag) {
@@ -365,20 +388,21 @@ public class RobotActivity extends AppCompatActivity {
                 }
             }
         }
-        if (ids.size()>0){
+        if (ids.size() > 0) {
             AlertDialog dialog;
-            AlertDialog.Builder builder=new AlertDialog.Builder(this)
+            AlertDialog.Builder builder = new AlertDialog.Builder(this)
                     .setMessage("是否删除选中的记录？")
                     .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             for (ChatBean chatBean : ids) {
+                                chatBeanList.remove(chatBean);
                                 LitePal.delete(ChatBean.class, chatBean.getId());
                             }
+                            adapter.notifyDataSetChanged();
                             Toast.makeText(RobotActivity.this, "删除成功", Toast.LENGTH_SHORT).show();
                             dialog.dismiss();
                             btnEditList();
-                            showQueryData();
                         }
                     })
                     .setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -387,20 +411,29 @@ public class RobotActivity extends AppCompatActivity {
                             dialog.dismiss();
                         }
                     });
-            dialog=builder.show();
-        }else {
+            dialog = builder.show();
+        } else {
             Toast.makeText(this, "您选择的记录为空", Toast.LENGTH_SHORT).show();
             return;
         }
     }
 
-    private void showQueryData() {
-        if (chatBeanList != null) {
-            chatBeanList.clear();
-        }
-        chatBeanList = LitePal.findAll(ChatBean.class);
-        adapter = new ChatAdapter(chatBeanList,this);
-        listView.setAdapter(adapter);
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    private void startCircular(Button myView) {
+        // get the center for the clipping circle
+        int cx = (myView.getLeft() + myView.getRight()) / 2;
+        int cy = (myView.getTop() + myView.getBottom()) / 2;
+
+        // get the final radius for the clipping circle
+        int dx = Math.max(cx, myView.getWidth() - cx);
+        int dy = Math.max(cy, myView.getHeight() - cy);
+        float finalRadius = (float) Math.hypot(dx, dy);
+
+        // Android native animator
+        Animator animator = ViewAnimationUtils.createCircularReveal(myView, cx, cy, 0, finalRadius);
+        animator.setInterpolator(new AccelerateDecelerateInterpolator());
+        animator.setDuration(100);
+        animator.start();
     }
 
 }
