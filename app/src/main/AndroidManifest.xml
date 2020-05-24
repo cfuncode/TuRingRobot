@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.cjz.turingrobot">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <application
+        android:name="org.litepal.LitePalApplication"
+        android:allowBackup="true"
+        android:usesCleartextTraffic="true"
+        android:icon="@mipmap/robot_icon"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/robot_icon"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme2">
+        <activity android:name=".activity.RobotActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

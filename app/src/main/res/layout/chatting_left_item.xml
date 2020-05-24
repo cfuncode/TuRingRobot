@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:padding="6dp">
+    <ImageView
+        android:id="@+id/iv_head"
+        android:layout_width="65dp"
+        android:layout_height="65dp"
+        android:layout_marginTop="5dp"
+        android:background="@drawable/robot_head"
+        android:layout_toRightOf="@+id/select"
+        android:focusable="false" />
+    <TextView
+        android:id="@+id/tv_chat_content"
+        style="@style/chat_content_style"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp"
+        android:layout_toEndOf="@id/iv_head"
+        android:background="@drawable/chat_left_selector" />
+    <CheckBox
+        android:visibility="gone"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:id="@+id/select"
+        android:button="@null"
+        android:background="@drawable/sel_selector"
+        android:layout_centerVertical="true"
+        android:layout_alignParentLeft="true"
+        android:checked="false"
+        android:layout_width="30dp"
+        android:layout_height="30dp"/>
+</RelativeLayout>
