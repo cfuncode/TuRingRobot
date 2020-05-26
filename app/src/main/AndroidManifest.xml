@@ -21,7 +21,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.SearchResultActvity" android:theme="@style/AppCompatTheme">
+        <activity android:name=".activity.SearchResultActvity" android:theme="@style/AppCompatTheme" android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH"/>
             </intent-filter>

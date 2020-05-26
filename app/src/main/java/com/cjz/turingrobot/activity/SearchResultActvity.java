@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -321,5 +322,15 @@ public class SearchResultActvity extends AppCompatActivity {
         animator.setDuration(200);
         animator.start();
     }
+
+    /*@Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
+            finish();
+            startActivity(new Intent(this,RobotActivity.class));
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }*/
 
 }

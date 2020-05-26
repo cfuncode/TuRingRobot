@@ -74,16 +74,15 @@ public class RobotActivity extends BaseActivity {
     private static final String KEY = "d1903503f2304b2ca3883f38b2a0238e";
     //POST请求体
     private static final String sendJson = "{\"reqType\": 0,\"perception\": {\"inputText\": {\"text\": \"%s\"},\"inputImage\": {\"url\": \"imageUrl\"},\"selfInfo\": {\"location\": {\"city\": \"北京\",\"province\": \"北京\",\"street\": \"信息路\"}}},\"userInfo\": {\"apiKey\": \"" + KEY + "\",\"userId\": \"" + USERID + "\"}}";
+    private String getSendJson(String sendMsg) {
+        return String.format(sendJson, sendMsg);
+    }
     private RelativeLayout mRlBottom;
     private Button mAllSelect;
     private Button mAllNotSelect;
     private Button mBackSelect;
     private Button mDelete;
     private LinearLayout mToolsBar;
-
-    private String getSendJson(String sendMsg) {
-        return String.format(sendJson, sendMsg);
-    }
 
     private String sendMsg;    //发送的信息
     private String welcome[];  //存储欢迎信息
