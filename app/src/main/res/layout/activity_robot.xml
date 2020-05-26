@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:fitsSystemWindows="true"
+    android:background="@color/blue"
     android:orientation="vertical">
-    <TextView
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/tl_head"
         android:layout_width="match_parent"
-        android:layout_height="45dp"
-        android:gravity="center"
-        android:background="#0cc4e5"
-        android:text="机器人"
-        android:textColor="@android:color/white"
-        android:textSize="20sp" />
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/blue"
+        app:navigationIcon="@drawable/ic_back" />
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent">
         <ListView
             android:id="@+id/list"
+            android:background="@android:color/white"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_above="@+id/r2_bottom"
@@ -27,6 +28,7 @@
             android:transcriptMode="alwaysScroll" />
         <RelativeLayout
             android:id="@+id/r2_bottom"
+            android:background="@android:color/white"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true">

@@ -3,7 +3,9 @@ package com.cjz.turingrobot.db;
 import org.litepal.annotation.Column;
 import org.litepal.crud.LitePalSupport;
 
-public class ChatBean extends LitePalSupport {
+import java.io.Serializable;
+
+public class ChatBean extends LitePalSupport implements Serializable {
     @Column(ignore = true)
     public static final int SEND = 1;     //发送消息
     @Column(ignore = true)

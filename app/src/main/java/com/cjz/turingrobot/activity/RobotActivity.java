@@ -1,55 +1,68 @@
 package com.cjz.turingrobot.activity;
 
 import android.animation.Animator;
+import android.annotation.SuppressLint;
+import android.app.SearchManager;
+import android.app.SearchableInfo;
 import android.content.ClipboardManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Outline;
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewAnimationUtils;
-import android.view.ViewOutlineProvider;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
 
 import com.cjz.turingrobot.R;
 import com.cjz.turingrobot.adapter.ChatAdapter;
 import com.cjz.turingrobot.db.ChatBean;
 import com.cjz.turingrobot.popuplist.PopupList;
+import com.cjz.turingrobot.util.MenuUtil;
 import com.cjz.turingrobot.util.MyOk;
+import com.github.zackratos.ultimatebar.UltimateBar;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.litepal.LitePal;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
-import okhttp3.internal.Util;
 
 import static org.litepal.LitePalApplication.getContext;
 
 public class RobotActivity extends BaseActivity {
+    private static final String TAG = "RobotActivity";
     private ListView listView;
     private ChatAdapter adapter;
     private List<ChatBean> chatBeanList; //存放所有聊天数据的集合
@@ -77,10 +90,20 @@ public class RobotActivity extends BaseActivity {
 
     private List<String> popupMenuItemList = new ArrayList<>();
 
+    private SearchView.SearchAutoComplete sac_key; // 声明一个搜索自动完成的编辑框对象
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //透明化状态栏、导航栏、沉浸式状态栏
+        UltimateBar.Companion.with(this).statusDark(true).applyNavigation(true).create().immersionBar();
         setContentView(R.layout.activity_robot);
+        // 从布局文件中获取名叫tl_head的工具栏
+        Toolbar tl_head = findViewById(R.id.tl_head);
+        // 设置工具栏的标题文字
+        tl_head.setTitle("机器人");
+        // 使用tl_head替换系统自带的ActionBar
+        setSupportActionBar(tl_head);
         chatBeanList = new ArrayList<ChatBean>();
         //获取内置的欢迎信息
         welcome = getResources().getStringArray(R.array.welcome);
@@ -136,6 +159,12 @@ public class RobotActivity extends BaseActivity {
             @Override
             public void onClick(View arg0) {
                 sendData();//点击发送按钮，发送信息
+            }
+        });
+        et_send_msg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                listView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_DISABLED);
             }
         });
         et_send_msg.setOnKeyListener(new View.OnKeyListener() {
@@ -391,7 +420,7 @@ public class RobotActivity extends BaseActivity {
         if (ids.size() > 0) {
             AlertDialog dialog;
             AlertDialog.Builder builder = new AlertDialog.Builder(this)
-                    .setMessage("是否删除选中的记录？")
+                    .setMessage("是否删除选中的记录？（共"+ids.size()+"条）")
                     .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -432,8 +461,163 @@ public class RobotActivity extends BaseActivity {
         // Android native animator
         Animator animator = ViewAnimationUtils.createCircularReveal(myView, cx, cy, 0, finalRadius);
         animator.setInterpolator(new AccelerateDecelerateInterpolator());
-        animator.setDuration(100);
+        animator.setDuration(200);
         animator.start();
     }
 
+    private static boolean isSearch=false;
+    // 根据菜单项初始化搜索框
+    @SuppressLint("RestrictedApi")
+    private void initSearchView(Menu menu) {
+        MenuItem menuItem = menu.findItem(R.id.menu_search);
+        // 从菜单项中获取搜索框对象
+        SearchView searchView = (SearchView) menuItem.getActionView();
+        // 设置搜索框默认自动缩小为图标
+        searchView.setIconifiedByDefault(getIntent().getBooleanExtra("collapse", true));
+//        searchView.setIconifiedByDefault(false);1
+        // 设置是否显示搜索按钮。搜索按钮只显示一个箭头图标，Android暂不支持显示文本。
+        // 查看Android源码，搜索按钮用的控件是ImageView，所以只能显示图标不能显示文字。
+        searchView.setSubmitButtonEnabled(true);
+        // 从系统服务中获取搜索管理器
+        SearchManager sm = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        // 创建搜索结果页面的组件名称对象
+        ComponentName cn = new ComponentName(this, SearchResultActvity.class);
+        // 从结果页面注册的activity节点获取相关搜索信息，即searchable.xml定义的搜索控件
+        SearchableInfo info = sm.getSearchableInfo(cn);
+        if (info == null) {
+            Log.d(TAG, "Fail to get SearchResultActvity.");
+            return;
+        }
+        // 设置搜索框的可搜索信息
+        searchView.setSearchableInfo(info);
+        // 从搜索框中获取名叫search_src_text的自动完成编辑框
+        searchView.setOnSearchClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                listView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_DISABLED);
+                mRlBottom.setVisibility(View.GONE);
+            }
+        });
+        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
+            @Override
+            public boolean onClose() {
+                mRlBottom.setVisibility(View.VISIBLE);
+                return false;
+            }
+        });
+        sac_key = searchView.findViewById(R.id.search_src_text);
+        // 设置自动完成编辑框的文本颜色
+        sac_key.setTextColor(Color.WHITE);
+        // 设置自动完成编辑框的提示文本颜色
+        sac_key.setHintTextColor(Color.WHITE);
+        // 给搜索框设置文本变化监听器
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            // 搜索关键词完成输入
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            // 搜索关键词发生变化
+            public boolean onQueryTextChange(String newText) {
+//                Toast.makeText(RobotActivity.this, "文本改变了", Toast.LENGTH_SHORT).show();
+                if (newText.length()>0){
+                    chatBeanList2.clear();
+                    for (ChatBean chatBean : chatBeanList) {
+                        if (chatBean.getMessage().contains(newText)){
+                            chatBeanList2.add(chatBean);
+                        }
+                    }
+//                    doSearch(newText);
+                }
+                return true;
+            }
+        });
+        Bundle bundle = new Bundle(); // 创建一个新包裹
+        bundle.putSerializable("chatBeanList", (Serializable) chatBeanList2); // 往包裹中存放chatBeanList2
+        // 设置搜索框的额外搜索数据
+        searchView.setAppSearchData(bundle);
+    }
+    private List<ChatBean> chatBeanList2 = new ArrayList<>();
+
+    // 自动匹配相关的关键词列表
+    private void doSearch(String text) {
+        if (chatBeanList.size()<=0)return;
+        String[] hintArray = new String[chatBeanList.size()];
+        for (int i = 0; i < chatBeanList.size(); i++) {
+            if (chatBeanList.get(i).getMessage().contains(text)){
+                hintArray[i]=chatBeanList.get(i).getMessage();
+            }
+        }
+        // 根据提示词数组构建一个数组适配器
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(RobotActivity.this, R.layout.search_list_auto, hintArray);
+        // 设置自动完成编辑框的数组适配器
+        sac_key.setAdapter(adapter);
+        // 给自动完成编辑框设置列表项的点击监听器
+        sac_key.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            // 一旦点击关键词匹配列表中的某一项，就触发点击监听器的onItemClick方法
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                sac_key.setText(((TextView) view).getText());
+            }
+        });
+    }
+
+    @Override
+    public boolean onMenuOpened(int featureId, Menu menu) {
+        // 显示菜单项左侧的图标
+        MenuUtil.setOverflowIconVisible(featureId, menu);
+        return super.onMenuOpened(featureId, menu);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // 从menu_search.xml中构建菜单界面布局
+        getMenuInflater().inflate(R.menu.menu_search, menu);
+        // 初始化搜索框
+        initSearchView(menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == android.R.id.home) { // 点击了工具栏左边的返回箭头
+            finish();
+        }else if (id == R.id.menu_refresh) { // 点击了刷新图标
+            listView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+            adapter.notifyDataSetChanged();
+            return true;
+        } else if (id == R.id.menu_about) { // 点击了关于菜单项
+            AlertDialog dialog;
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("作者：Click")
+                    .setPositiveButton("确定",new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+            dialog=builder.show();
+            return true;
+        } else if (id == R.id.menu_quit) { // 点击了退出菜单项
+            finish();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (isReturn){
+            sac_key.setText("");
+            adapter.flag=false;
+            mToolsBar.setVisibility(View.GONE);
+            mRlBottom.setVisibility(View.VISIBLE);
+            listView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_DISABLED);
+            chatBeanList=LitePal.findAll(ChatBean.class);
+            adapter = new ChatAdapter(chatBeanList,this);
+            listView.setAdapter(adapter);
+            isReturn=false;
+        }
+    }
+    public static boolean isReturn=false;
 }

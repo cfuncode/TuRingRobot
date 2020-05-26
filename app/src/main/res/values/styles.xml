@@ -15,6 +15,9 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="AppCompatTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    </style>
+
     <style name="chat_content_style">
         <item name="android:minHeight">50dp</item>
         <item name="android:gravity">center_vertical</item>
