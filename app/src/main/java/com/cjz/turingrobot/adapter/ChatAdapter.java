@@ -60,7 +60,7 @@ public class ChatAdapter extends BaseAdapter {
                 return false;
             }
         });
-        // 根据isSelected来设置checkbox的显示状况
+        // 根据isCheck来设置checkbox的显示状况
         if (flag) {
             holder.checkBox.setVisibility(View.VISIBLE);
             if (chatBeanList.get(position).isCheck) {

@@ -8,10 +8,6 @@ import android.view.Window;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-/**
- * Created by ouyangshen on 2018/1/21.
- */
-
 public class MenuUtil {
 
     // 如果设备有物理菜单按键，需要将其屏蔽才能显示OverflowMenu
